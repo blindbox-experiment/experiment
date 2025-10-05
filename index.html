@@ -16,7 +16,7 @@
     }
     video {
       width: 360px;
-      height: 640px; /* TikTok 9:16 vertical format */
+      height: 640px;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       background: black;
@@ -70,125 +70,123 @@
 
   <script>
   const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxozqcVUc7yS-fWf6GXgT96GyC6QxnmtVbJ-cVIlq2UyB3uvSXzXficcSes0o-JVZHbvQ/exec";
-    const VIDEOS = {
-      1: "videos/video1.mp4",
-      2: "videos/video2.mp4",
-      3: "videos/video3.mp4",
-      4: "videos/video4.mp4"
-    };
-    const STARTING_CREDITS = 3000;
-    const BOX_PRICE = 600;
+  const VIDEOS = {
+    1: "videos/video1.mp4",
+    2: "videos/video2.mp4",
+    3: "videos/video3.mp4",
+    4: "videos/video4.mp4"
+  };
+  const STARTING_CREDITS = 3000;
+  const BOX_PRICE = 600;
 
-    let participantID = null;
-    let currentVideo = null;
-    let credits = STARTING_CREDITS;
-    let totalPurchased = 0;
-    let videoStartTime = null;
+  let participantID = null;
+  let currentVideo = null;
+  let credits = STARTING_CREDITS;
+  let totalPurchased = 0;
+  let videoStartTime = null;
 
-    function generatePID() {
-      const now = new Date();
-      return "P" + now.getFullYear() + 
-        (now.getMonth()+1).toString().padStart(2,'0') + 
-        now.getDate().toString().padStart(2,'0') + "_" + 
-        now.getHours().toString().padStart(2,'0') + 
-        now.getMinutes().toString().padStart(2,'0') + 
-        now.getSeconds().toString().padStart(2,'0') + "_" + 
-        Math.floor(Math.random()*1000);
-    }
+  function generatePID() {
+    const now = new Date();
+    return "P" + now.getFullYear() + 
+      (now.getMonth()+1).toString().padStart(2,'0') + 
+      now.getDate().toString().padStart(2,'0') + "_" + 
+      now.getHours().toString().padStart(2,'0') + 
+      now.getMinutes().toString().padStart(2,'0') + 
+      now.getSeconds().toString().padStart(2,'0') + "_" + 
+      Math.floor(Math.random()*1000);
+  }
 
-    function loadVideo(num) {
-      participantID = generatePID();
-      currentVideo = {number: num, file: VIDEOS[num]};
+  function loadVideo(num) {
+    participantID = generatePID();
+    currentVideo = {number: num, file: VIDEOS[num]};
 
-      const buttons = document.querySelectorAll('#videoButtons .btn');
-      buttons.forEach(btn => {
-        btn.classList.add('disabled');
-        btn.disabled = true;
-      });
+    const buttons = document.querySelectorAll('#videoButtons .btn');
+    buttons.forEach(btn => {
+      btn.classList.add('disabled');
+      btn.disabled = true;
+    });
 
-      const videoEl = document.getElementById("expVideo");
-      videoEl.src = currentVideo.file;
-      document.getElementById("buy-btn").style.display = "inline-block";
+    const videoEl = document.getElementById("expVideo");
+    videoEl.src = currentVideo.file;
+    document.getElementById("buy-btn").style.display = "inline-block";
 
-      credits = STARTING_CREDITS;
-      totalPurchased = 0;
+    credits = STARTING_CREDITS;
+    totalPurchased = 0;
+    updateStatus();
+
+    logEvent("PAGE_LOAD", 0, 0);
+
+    videoEl.addEventListener("play", () => {
+      if (!videoStartTime) {
+        videoStartTime = new Date();
+        logEvent("VIDEO_PLAY", 0, 0);
+      }
+    });
+  }
+
+  function purchase() {
+    if (credits >= BOX_PRICE) {
+      credits -= BOX_PRICE;
+      totalPurchased++;
       updateStatus();
 
-      logEvent("PAGE_LOAD", 0, 0);
+      let elapsed = 0;
+      if (videoStartTime) elapsed = (new Date() - videoStartTime) / 1000;
 
-      videoEl.addEventListener("play", () => {
-        if (!videoStartTime) {
-          videoStartTime = new Date();
-          logEvent("VIDEO_PLAY", 0, 0);
-        }
-      });
+      logEvent("BUY", totalPurchased, elapsed);
+    } else {
+      alert("Not enough credits!");
     }
+  }
 
-    function purchase() {
-      if (credits >= BOX_PRICE) {
-        credits -= BOX_PRICE;
-        totalPurchased++;
-        updateStatus();
+  function updateStatus() {
+    document.getElementById("credits").innerText =
+      "Credits Remaining: ₱" + credits;
+    document.getElementById("purchases").innerText =
+      "Blind Boxes Purchased: " + totalPurchased;
+  }
 
-        let elapsed = 0;
-        if (videoStartTime) elapsed = (new Date() - videoStartTime) / 1000;
+  async function logEvent(action, purchases, elapsedTime) {
+    const payload = {
+      timestamp: new Date().toISOString(),
+      pid: participantID,
+      videoNumber: currentVideo ? currentVideo.number : "",
+      videoFile: currentVideo ? currentVideo.file : "",
+      action: action,
+      creditsRemaining: credits,
+      totalPurchased: purchases,
+      timeSinceStart: elapsedTime
+    };
 
-        logEvent("BUY", totalPurchased, elapsed);
-      } else {
-        alert("Not enough credits!");
-      }
-    }
+    const formData = new URLSearchParams();
+    formData.append("data", JSON.stringify(payload));
 
-    function updateStatus() {
-      document.getElementById("credits").innerText =
-        "Credits Remaining: ₱" + credits;
-      document.getElementById("purchases").innerText =
-        "Blind Boxes Purchased: " + totalPurchased;
-    }
-
-    function logEvent(action, purchases, elapsedTime) {
-      const payload = {
-        timestamp: new Date().toISOString(),
-        pid: participantID,
-        videoNumber: currentVideo ? currentVideo.number : "",
-        videoFile: currentVideo ? currentVideo.file : "",
-        action: action,
-        creditsRemaining: credits,
-        totalPurchased: purchases,
-        timeSinceStart: elapsedTime
-      };
-
-      // form-encoded body (no CORS issue)
-      const body = "data=" + encodeURIComponent(JSON.stringify(payload));
-
-      fetch(GOOGLE_SCRIPT_URL, {
+    try {
+      const response = await fetch(GOOGLE_SCRIPT_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
-        },
-        body
-      })
-      .then(r => r.text())
-      .then(txt => {
-        console.log("Sheets response:", txt);
-        // show quick confirmation (optional)
-        if (action === "BUY") {
-          const note = document.createElement("div");
-          note.innerText = "✅ Recorded!";
-          note.style.position = "fixed";
-          note.style.bottom = "20px";
-          note.style.right = "20px";
-          note.style.background = "#4caf50";
-          note.style.color = "white";
-          note.style.padding = "10px 20px";
-          note.style.borderRadius = "8px";
-          note.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
-          document.body.appendChild(note);
-          setTimeout(() => note.remove(), 1500);
-        }
-      })
-      .catch(err => console.error("Logging error", err));
+        body: formData
+      });
+      const text = await response.text();
+      console.log("Sheets response:", text);
+
+      if (action === "BUY") {
+        const note = document.createElement("div");
+        note.innerText = "✅ Recorded!";
+        note.style.position = "fixed";
+        note.style.bottom = "20px";
+        note.style.right = "20px";
+        note.style.background = "#4caf50";
+        note.style.color = "white";
+        note.style.padding = "10px 20px";
+        note.style.borderRadius = "8px";
+        note.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
+        document.body.appendChild(note);
+        setTimeout(() => note.remove(), 1500);
+      }
+    } catch (err) {
+      console.error("Logging error", err);
     }
+  }
   </script>
 </body>
 </html>
