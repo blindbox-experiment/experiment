@@ -31,7 +31,7 @@
     }
     video {
       width: 360px;
-      height: 640px;
+      height: 640px; /* TikTok 9:16 format */
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       background: black;
@@ -104,12 +104,15 @@
     }
 
     function startExperiment() {
-      age = document.getElementById("ageInput").value;
+      age = document.getElementById("ageInput").value.trim();
       const sexRadios = document.getElementsByName("sex");
-      sex = [...sexRadios].find(r => r.checked)?.value || "";
+      const selected = [...sexRadios].find(r => r.checked);
+      sex = selected ? selected.value : "";
+
+      console.log("DEBUG — age:", age, "sex:", sex);
 
       if (!age || !sex) {
-        alert("Please enter both Age and Sex.");
+        alert("Please enter both Age and Sex (F/M).");
         return;
       }
 
@@ -123,8 +126,7 @@
     function loadVideo(num) {
       currentVideo = {number: num, file: VIDEOS[num]};
 
-      const buttons = document.querySelectorAll('#videoButtons .btn');
-      buttons.forEach(btn => {
+      document.querySelectorAll('#videoButtons .btn').forEach(btn => {
         btn.classList.add('disabled');
         btn.disabled = true;
       });
@@ -173,9 +175,9 @@
     function logEvent(action, purchases, elapsedTime, playbackTime) {
       const payload = {
         timestamp: new Date().toISOString(),
-        pid: participantID,
-        age: age,
-        sex: sex,
+        pid: participantID || "N/A",
+        age: age || "N/A",
+        sex: sex || "N/A",
         videoNumber: currentVideo ? currentVideo.number : "",
         videoFile: currentVideo ? currentVideo.file : "",
         action: action,
@@ -184,6 +186,8 @@
         timeSinceStart: elapsedTime,
         videoPlaybackTime: playbackTime
       };
+
+      console.log("DEBUG — sending payload:", payload);
 
       const body = "data=" + encodeURIComponent(JSON.stringify(payload));
       fetch(GOOGLE_SCRIPT_URL, {
