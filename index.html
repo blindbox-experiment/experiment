@@ -8,19 +8,10 @@
       font-family: Arial, sans-serif;
       text-align: center;
       background: #fafafa;
+      margin: 0;
+      padding: 0;
     }
-    .video-container {
-      display: flex;
-      justify-content: center;
-      margin-top: 20px;
-    }
-    video {
-      width: 360px;
-      height: 640px; /* TikTok 9:16 vertical format */
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      background: black;
-    }
+    .hidden { display: none; }
     .btn {
       display: inline-block;
       margin: 10px;
@@ -40,56 +31,73 @@
       cursor: not-allowed;
       opacity: 0.6;
     }
+    video {
+      width: 360px;
+      height: 640px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      background: black;
+    }
     #buy-btn {
       margin-top: 20px;
       background: #ff3b5c;
     }
+    .video-container { display: flex; justify-content: center; margin-top: 20px; }
   </style>
 </head>
 <body>
   <h1>TikTok Live Blind Box Experiment</h1>
-  <p>Select a video to start:</p>
 
-  <div id="videoButtons">
-    <button class="btn" onclick="loadVideo(1)">1st Video</button>
-    <button class="btn" onclick="loadVideo(2)">2nd Video</button>
-    <button class="btn" onclick="loadVideo(3)">3rd Video</button>
-    <button class="btn" onclick="loadVideo(4)">4th Video</button>
+  <!-- AGE/GENDER FORM -->
+  <div id="introForm">
+    <h3>Before we begin, please enter your details:</h3>
+    <label>Age: </label>
+    <input type="number" id="ageInput" min="15" max="40" required><br><br>
+
+    <label>Gender: </label>
+    <label><input type="radio" name="gender" value="Male"> Male</label>
+    <label><input type="radio" name="gender" value="Female"> Female</label><br><br>
+
+    <button class="btn" onclick="startExperiment()">Continue</button>
   </div>
 
-  <div class="video-container">
-    <video id="expVideo" controls playsinline></video>
-  </div>
+  <!-- VIDEO SELECTION -->
+  <div id="experimentSection" class="hidden">
+    <p>Select a video to start:</p>
+    <div id="videoButtons">
+      <button class="btn" onclick="loadVideo(1)">1st Video</button>
+      <button class="btn" onclick="loadVideo(2)">2nd Video</button>
+      <button class="btn" onclick="loadVideo(3)">3rd Video</button>
+      <button class="btn" onclick="loadVideo(4)">4th Video</button>
+    </div>
 
-  <div>
-    <button id="buy-btn" class="btn" onclick="purchase()" style="display:none;">Buy Blind Box (₱600)</button>
-  </div>
+    <div class="video-container">
+      <video id="expVideo" controls playsinline></video>
+    </div>
 
-  <p id="credits"></p>
-  <p id="purchases"></p>
+    <div>
+      <button id="buy-btn" class="btn hidden" onclick="purchase()">Buy Blind Box (₱600)</button>
+    </div>
+
+    <p id="credits"></p>
+    <p id="purchases"></p>
+  </div>
 
   <script>
-    // Google Apps Script endpoint
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbytBcRUYGS9cXGciBkt7YSXPSR9LGWQwgR5gQacLKUR_i9HUyUNAFwaso028hzlKt8kBA/exec";
 
-    // Video file mapping
     const VIDEOS = {
-      1: "videos/video1.mp4",
-      2: "videos/video2.mp4",
-      3: "videos/video3.mp4",
-      4: "videos/video4.mp4"
+      1: "videos/video1.mp4", // Control
+      2: "videos/video2.mp4", // Scarcity only
+      3: "videos/video3.mp4", // Social proof only
+      4: "videos/video4.mp4"  // Both cues
     };
 
     const STARTING_CREDITS = 3000;
     const BOX_PRICE = 600;
 
-    let participantID = null;
-    let currentVideo = null;
-    let credits = STARTING_CREDITS;
-    let totalPurchased = 0;
-    let videoStartTime = null;
+    let participantID, currentVideo, credits, totalPurchased, videoStartTime, age, gender;
 
-    // Generate unique participant ID
     function generatePID() {
       const now = new Date();
       return "P" + now.getFullYear() + 
@@ -101,9 +109,24 @@
         Math.floor(Math.random()*1000);
     }
 
-    // Load video when condition selected
-    function loadVideo(num) {
+    function startExperiment() {
+      age = document.getElementById("ageInput").value;
+      const genderRadios = document.getElementsByName("gender");
+      gender = [...genderRadios].find(r => r.checked)?.value || "";
+
+      if (!age || !gender) {
+        alert("Please enter both Age and Gender.");
+        return;
+      }
+
+      document.getElementById("introForm").classList.add("hidden");
+      document.getElementById("experimentSection").classList.remove("hidden");
+
       participantID = generatePID();
+      logEvent("FORM_SUBMIT", 0, 0);
+    }
+
+    function loadVideo(num) {
       currentVideo = {number: num, file: VIDEOS[num]};
 
       const buttons = document.querySelectorAll('#videoButtons .btn');
@@ -114,13 +137,14 @@
 
       const videoEl = document.getElementById("expVideo");
       videoEl.src = currentVideo.file;
-      document.getElementById("buy-btn").style.display = "inline-block";
+      document.getElementById("buy-btn").classList.remove("hidden");
 
       credits = STARTING_CREDITS;
       totalPurchased = 0;
+      videoStartTime = null;
       updateStatus();
 
-      logEvent("PAGE_LOAD", 0, 0);
+      logEvent("VIDEO_LOAD", 0, 0);
 
       videoEl.addEventListener("play", () => {
         if (!videoStartTime) {
@@ -130,7 +154,6 @@
       });
     }
 
-    // Handle purchase click
     function purchase() {
       if (credits >= BOX_PRICE) {
         credits -= BOX_PRICE;
@@ -139,66 +162,40 @@
 
         let elapsed = 0;
         if (videoStartTime) elapsed = (new Date() - videoStartTime) / 1000;
-
         logEvent("BUY", totalPurchased, elapsed);
       } else {
         alert("Not enough credits!");
       }
     }
 
-    // Update credits and purchases display
     function updateStatus() {
-      document.getElementById("credits").innerText =
-        "Credits Remaining: ₱" + credits;
-      document.getElementById("purchases").innerText =
-        "Blind Boxes Purchased: " + totalPurchased;
+      document.getElementById("credits").innerText = "Credits Remaining: ₱" + credits;
+      document.getElementById("purchases").innerText = "Blind Boxes Purchased: " + totalPurchased;
     }
 
-    // Log data to Google Sheets
-    async function logEvent(action, purchases, elapsedTime) {
-      const videoEl = document.getElementById("expVideo");
-      const playbackTime = videoEl ? videoEl.currentTime : 0; // Track current playback time
-
+    function logEvent(action, purchases, elapsedTime) {
       const payload = {
         timestamp: new Date().toISOString(),
         pid: participantID,
+        age: age,
+        gender: gender,
         videoNumber: currentVideo ? currentVideo.number : "",
         videoFile: currentVideo ? currentVideo.file : "",
         action: action,
         creditsRemaining: credits,
         totalPurchased: purchases,
-        timeSinceStart: elapsedTime,
-        videoPlaybackTime: playbackTime.toFixed(2)
+        timeSinceStart: elapsedTime
       };
 
-      const formData = new URLSearchParams();
-      formData.append("data", JSON.stringify(payload));
-
-      try {
-        const response = await fetch(GOOGLE_SCRIPT_URL, {
-          method: "POST",
-          body: formData
-        });
-        const text = await response.text();
-        console.log("Sheets response:", text);
-
-        if (action === "BUY") {
-          const note = document.createElement("div");
-          note.innerText = "✅ Recorded!";
-          note.style.position = "fixed";
-          note.style.bottom = "20px";
-          note.style.right = "20px";
-          note.style.background = "#4caf50";
-          note.style.color = "white";
-          note.style.padding = "10px 20px";
-          note.style.borderRadius = "8px";
-          note.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
-          document.body.appendChild(note);
-          setTimeout(() => note.remove(), 1500);
-        }
-      } catch (err) {
-        console.error("Logging error", err);
-      }
+      const body = "data=" + encodeURIComponent(JSON.stringify(payload));
+      fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"},
+        body
+      })
+      .then(r => r.text())
+      .then(txt => console.log("Sheets response:", txt))
+      .catch(err => console.error("Logging error", err));
     }
   </script>
 </body>
