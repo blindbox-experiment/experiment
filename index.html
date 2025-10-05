@@ -49,21 +49,18 @@
 <body>
   <h1>TikTok Live Blind Box Experiment</h1>
   <p>Select a video to start:</p>
-  
-  <!-- Video condition buttons -->
+
   <div id="videoButtons">
     <button class="btn" onclick="loadVideo(1)">1st Video</button>
     <button class="btn" onclick="loadVideo(2)">2nd Video</button>
     <button class="btn" onclick="loadVideo(3)">3rd Video</button>
     <button class="btn" onclick="loadVideo(4)">4th Video</button>
   </div>
-  
-  <!-- Where video will load -->
+
   <div class="video-container">
     <video id="expVideo" controls playsinline></video>
   </div>
 
-  <!-- Buy button -->
   <div>
     <button id="buy-btn" class="btn" onclick="purchase()" style="display:none;">Buy Blind Box (₱600)</button>
   </div>
@@ -72,7 +69,7 @@
   <p id="purchases"></p>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzGNqCFelo6ILUItCl6o46SX9g18ucn3Gae344XNitv026MbhP0EywMKQbvnM1JLiJobA/exec"; 
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzGNqCFelo6ILUItCl6o46SX9g18ucn3Gae344XNitv026MbhP0EywMKQbvnM1JLiJobA/exec";
     const VIDEOS = {
       1: "videos/video1.mp4",
       2: "videos/video2.mp4",
@@ -134,9 +131,7 @@
         updateStatus();
 
         let elapsed = 0;
-        if (videoStartTime) {
-          elapsed = (new Date() - videoStartTime) / 1000;
-        }
+        if (videoStartTime) elapsed = (new Date() - videoStartTime) / 1000;
 
         logEvent("BUY", totalPurchased, elapsed);
       } else {
@@ -145,9 +140,9 @@
     }
 
     function updateStatus() {
-      document.getElementById("credits").innerText = 
+      document.getElementById("credits").innerText =
         "Credits Remaining: ₱" + credits;
-      document.getElementById("purchases").innerText = 
+      document.getElementById("purchases").innerText =
         "Blind Boxes Purchased: " + totalPurchased;
     }
 
@@ -163,11 +158,36 @@
         timeSinceStart: elapsedTime
       };
 
+      // form-encoded body (no CORS issue)
+      const body = "data=" + encodeURIComponent(JSON.stringify(payload));
+
       fetch(GOOGLE_SCRIPT_URL, {
         method: "POST",
-        body: JSON.stringify(payload),
-        headers: {"Content-Type": "application/json"}
-      }).catch(err => console.error("Logging error", err));
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+        },
+        body
+      })
+      .then(r => r.text())
+      .then(txt => {
+        console.log("Sheets response:", txt);
+        // show quick confirmation (optional)
+        if (action === "BUY") {
+          const note = document.createElement("div");
+          note.innerText = "✅ Recorded!";
+          note.style.position = "fixed";
+          note.style.bottom = "20px";
+          note.style.right = "20px";
+          note.style.background = "#4caf50";
+          note.style.color = "white";
+          note.style.padding = "10px 20px";
+          note.style.borderRadius = "8px";
+          note.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
+          document.body.appendChild(note);
+          setTimeout(() => note.remove(), 1500);
+        }
+      })
+      .catch(err => console.error("Logging error", err));
     }
   </script>
 </body>
