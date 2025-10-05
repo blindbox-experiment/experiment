@@ -8,8 +8,6 @@
       font-family: Arial, sans-serif;
       text-align: center;
       background: #fafafa;
-      margin: 0;
-      padding: 0;
     }
     .hidden { display: none; }
     .btn {
@@ -38,30 +36,27 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       background: black;
     }
-    #buy-btn {
-      margin-top: 20px;
-      background: #ff3b5c;
-    }
+    #buy-btn { margin-top: 20px; background: #ff3b5c; }
     .video-container { display: flex; justify-content: center; margin-top: 20px; }
   </style>
 </head>
 <body>
   <h1>TikTok Live Blind Box Experiment</h1>
 
-  <!-- AGE/GENDER FORM -->
+  <!-- Age and Sex Form -->
   <div id="introForm">
     <h3>Before we begin, please enter your details:</h3>
     <label>Age: </label>
     <input type="number" id="ageInput" min="15" max="40" required><br><br>
 
-    <label>Gender: </label>
-    <label><input type="radio" name="gender" value="Male"> Male</label>
-    <label><input type="radio" name="gender" value="Female"> Female</label><br><br>
+    <label>Sex (F/M): </label>
+    <label><input type="radio" name="sex" value="M"> Male</label>
+    <label><input type="radio" name="sex" value="F"> Female</label><br><br>
 
     <button class="btn" onclick="startExperiment()">Continue</button>
   </div>
 
-  <!-- VIDEO SELECTION -->
+  <!-- Experiment Section -->
   <div id="experimentSection" class="hidden">
     <p>Select a video to start:</p>
     <div id="videoButtons">
@@ -87,16 +82,15 @@
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbytBcRUYGS9cXGciBkt7YSXPSR9LGWQwgR5gQacLKUR_i9HUyUNAFwaso028hzlKt8kBA/exec";
 
     const VIDEOS = {
-      1: "videos/video1.mp4", // Control
-      2: "videos/video2.mp4", // Scarcity only
-      3: "videos/video3.mp4", // Social proof only
-      4: "videos/video4.mp4"  // Both cues
+      1: "videos/video1.mp4",
+      2: "videos/video2.mp4",
+      3: "videos/video3.mp4",
+      4: "videos/video4.mp4"
     };
-
     const STARTING_CREDITS = 3000;
     const BOX_PRICE = 600;
 
-    let participantID, currentVideo, credits, totalPurchased, videoStartTime, age, gender;
+    let participantID, currentVideo, credits, totalPurchased, videoStartTime, age, sex;
 
     function generatePID() {
       const now = new Date();
@@ -111,11 +105,11 @@
 
     function startExperiment() {
       age = document.getElementById("ageInput").value;
-      const genderRadios = document.getElementsByName("gender");
-      gender = [...genderRadios].find(r => r.checked)?.value || "";
+      const sexRadios = document.getElementsByName("sex");
+      sex = [...sexRadios].find(r => r.checked)?.value || "";
 
-      if (!age || !gender) {
-        alert("Please enter both Age and Gender.");
+      if (!age || !sex) {
+        alert("Please enter both Age and Sex.");
         return;
       }
 
@@ -123,7 +117,7 @@
       document.getElementById("experimentSection").classList.remove("hidden");
 
       participantID = generatePID();
-      logEvent("FORM_SUBMIT", 0, 0);
+      logEvent("FORM_SUBMIT", 0, 0, 0);
     }
 
     function loadVideo(num) {
@@ -144,17 +138,20 @@
       videoStartTime = null;
       updateStatus();
 
-      logEvent("VIDEO_LOAD", 0, 0);
+      logEvent("VIDEO_LOAD", 0, 0, 0);
 
       videoEl.addEventListener("play", () => {
         if (!videoStartTime) {
           videoStartTime = new Date();
-          logEvent("VIDEO_PLAY", 0, 0);
+          logEvent("VIDEO_PLAY", 0, 0, 0);
         }
       });
     }
 
     function purchase() {
+      const videoEl = document.getElementById("expVideo");
+      const playbackTime = videoEl.currentTime;
+
       if (credits >= BOX_PRICE) {
         credits -= BOX_PRICE;
         totalPurchased++;
@@ -162,7 +159,7 @@
 
         let elapsed = 0;
         if (videoStartTime) elapsed = (new Date() - videoStartTime) / 1000;
-        logEvent("BUY", totalPurchased, elapsed);
+        logEvent("BUY", totalPurchased, elapsed, playbackTime);
       } else {
         alert("Not enough credits!");
       }
@@ -173,18 +170,19 @@
       document.getElementById("purchases").innerText = "Blind Boxes Purchased: " + totalPurchased;
     }
 
-    function logEvent(action, purchases, elapsedTime) {
+    function logEvent(action, purchases, elapsedTime, playbackTime) {
       const payload = {
         timestamp: new Date().toISOString(),
         pid: participantID,
         age: age,
-        gender: gender,
+        sex: sex,
         videoNumber: currentVideo ? currentVideo.number : "",
         videoFile: currentVideo ? currentVideo.file : "",
         action: action,
         creditsRemaining: credits,
         totalPurchased: purchases,
-        timeSinceStart: elapsedTime
+        timeSinceStart: elapsedTime,
+        videoPlaybackTime: playbackTime
       };
 
       const body = "data=" + encodeURIComponent(JSON.stringify(payload));
