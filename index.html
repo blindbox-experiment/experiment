@@ -163,7 +163,7 @@
         timeSinceStart: elapsedTime
       };
 
-      fetch("https://script.google.com/macros/s/AKfycbyyLnYl5-FZAdKl-NYlEStnmCxeOqy9M-Zvh3en0ncp09-OFz9lEyl5ZyH6wsxL9NPkXw/exec", {
+      fetch(GOOGLE_SCRIPT_URL, {
         method: "POST",
         body: JSON.stringify(payload),
         headers: {"Content-Type": "application/json"}
