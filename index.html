@@ -16,7 +16,7 @@
     }
     video {
       width: 360px;
-      height: 640px;
+      height: 640px; /* TikTok 9:16 vertical format */
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       background: black;
@@ -69,124 +69,137 @@
   <p id="purchases"></p>
 
   <script>
-  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxozqcVUc7yS-fWf6GXgT96GyC6QxnmtVbJ-cVIlq2UyB3uvSXzXficcSes0o-JVZHbvQ/exec";
-  const VIDEOS = {
-    1: "videos/video1.mp4",
-    2: "videos/video2.mp4",
-    3: "videos/video3.mp4",
-    4: "videos/video4.mp4"
-  };
-  const STARTING_CREDITS = 3000;
-  const BOX_PRICE = 600;
+    // Google Apps Script endpoint
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbytBcRUYGS9cXGciBkt7YSXPSR9LGWQwgR5gQacLKUR_i9HUyUNAFwaso028hzlKt8kBA/exec";
 
-  let participantID = null;
-  let currentVideo = null;
-  let credits = STARTING_CREDITS;
-  let totalPurchased = 0;
-  let videoStartTime = null;
-
-  function generatePID() {
-    const now = new Date();
-    return "P" + now.getFullYear() + 
-      (now.getMonth()+1).toString().padStart(2,'0') + 
-      now.getDate().toString().padStart(2,'0') + "_" + 
-      now.getHours().toString().padStart(2,'0') + 
-      now.getMinutes().toString().padStart(2,'0') + 
-      now.getSeconds().toString().padStart(2,'0') + "_" + 
-      Math.floor(Math.random()*1000);
-  }
-
-  function loadVideo(num) {
-    participantID = generatePID();
-    currentVideo = {number: num, file: VIDEOS[num]};
-
-    const buttons = document.querySelectorAll('#videoButtons .btn');
-    buttons.forEach(btn => {
-      btn.classList.add('disabled');
-      btn.disabled = true;
-    });
-
-    const videoEl = document.getElementById("expVideo");
-    videoEl.src = currentVideo.file;
-    document.getElementById("buy-btn").style.display = "inline-block";
-
-    credits = STARTING_CREDITS;
-    totalPurchased = 0;
-    updateStatus();
-
-    logEvent("PAGE_LOAD", 0, 0);
-
-    videoEl.addEventListener("play", () => {
-      if (!videoStartTime) {
-        videoStartTime = new Date();
-        logEvent("VIDEO_PLAY", 0, 0);
-      }
-    });
-  }
-
-  function purchase() {
-    if (credits >= BOX_PRICE) {
-      credits -= BOX_PRICE;
-      totalPurchased++;
-      updateStatus();
-
-      let elapsed = 0;
-      if (videoStartTime) elapsed = (new Date() - videoStartTime) / 1000;
-
-      logEvent("BUY", totalPurchased, elapsed);
-    } else {
-      alert("Not enough credits!");
-    }
-  }
-
-  function updateStatus() {
-    document.getElementById("credits").innerText =
-      "Credits Remaining: ₱" + credits;
-    document.getElementById("purchases").innerText =
-      "Blind Boxes Purchased: " + totalPurchased;
-  }
-
-  async function logEvent(action, purchases, elapsedTime) {
-    const payload = {
-      timestamp: new Date().toISOString(),
-      pid: participantID,
-      videoNumber: currentVideo ? currentVideo.number : "",
-      videoFile: currentVideo ? currentVideo.file : "",
-      action: action,
-      creditsRemaining: credits,
-      totalPurchased: purchases,
-      timeSinceStart: elapsedTime
+    // Video file mapping
+    const VIDEOS = {
+      1: "videos/video1.mp4",
+      2: "videos/video2.mp4",
+      3: "videos/video3.mp4",
+      4: "videos/video4.mp4"
     };
 
-    const formData = new URLSearchParams();
-    formData.append("data", JSON.stringify(payload));
+    const STARTING_CREDITS = 3000;
+    const BOX_PRICE = 600;
 
-    try {
-      const response = await fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        body: formData
-      });
-      const text = await response.text();
-      console.log("Sheets response:", text);
+    let participantID = null;
+    let currentVideo = null;
+    let credits = STARTING_CREDITS;
+    let totalPurchased = 0;
+    let videoStartTime = null;
 
-      if (action === "BUY") {
-        const note = document.createElement("div");
-        note.innerText = "✅ Recorded!";
-        note.style.position = "fixed";
-        note.style.bottom = "20px";
-        note.style.right = "20px";
-        note.style.background = "#4caf50";
-        note.style.color = "white";
-        note.style.padding = "10px 20px";
-        note.style.borderRadius = "8px";
-        note.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
-        document.body.appendChild(note);
-        setTimeout(() => note.remove(), 1500);
-      }
-    } catch (err) {
-      console.error("Logging error", err);
+    // Generate unique participant ID
+    function generatePID() {
+      const now = new Date();
+      return "P" + now.getFullYear() + 
+        (now.getMonth()+1).toString().padStart(2,'0') + 
+        now.getDate().toString().padStart(2,'0') + "_" + 
+        now.getHours().toString().padStart(2,'0') + 
+        now.getMinutes().toString().padStart(2,'0') + 
+        now.getSeconds().toString().padStart(2,'0') + "_" + 
+        Math.floor(Math.random()*1000);
     }
-  }
+
+    // Load video when condition selected
+    function loadVideo(num) {
+      participantID = generatePID();
+      currentVideo = {number: num, file: VIDEOS[num]};
+
+      const buttons = document.querySelectorAll('#videoButtons .btn');
+      buttons.forEach(btn => {
+        btn.classList.add('disabled');
+        btn.disabled = true;
+      });
+
+      const videoEl = document.getElementById("expVideo");
+      videoEl.src = currentVideo.file;
+      document.getElementById("buy-btn").style.display = "inline-block";
+
+      credits = STARTING_CREDITS;
+      totalPurchased = 0;
+      updateStatus();
+
+      logEvent("PAGE_LOAD", 0, 0);
+
+      videoEl.addEventListener("play", () => {
+        if (!videoStartTime) {
+          videoStartTime = new Date();
+          logEvent("VIDEO_PLAY", 0, 0);
+        }
+      });
+    }
+
+    // Handle purchase click
+    function purchase() {
+      if (credits >= BOX_PRICE) {
+        credits -= BOX_PRICE;
+        totalPurchased++;
+        updateStatus();
+
+        let elapsed = 0;
+        if (videoStartTime) elapsed = (new Date() - videoStartTime) / 1000;
+
+        logEvent("BUY", totalPurchased, elapsed);
+      } else {
+        alert("Not enough credits!");
+      }
+    }
+
+    // Update credits and purchases display
+    function updateStatus() {
+      document.getElementById("credits").innerText =
+        "Credits Remaining: ₱" + credits;
+      document.getElementById("purchases").innerText =
+        "Blind Boxes Purchased: " + totalPurchased;
+    }
+
+    // Log data to Google Sheets
+    async function logEvent(action, purchases, elapsedTime) {
+      const videoEl = document.getElementById("expVideo");
+      const playbackTime = videoEl ? videoEl.currentTime : 0; // Track current playback time
+
+      const payload = {
+        timestamp: new Date().toISOString(),
+        pid: participantID,
+        videoNumber: currentVideo ? currentVideo.number : "",
+        videoFile: currentVideo ? currentVideo.file : "",
+        action: action,
+        creditsRemaining: credits,
+        totalPurchased: purchases,
+        timeSinceStart: elapsedTime,
+        videoPlaybackTime: playbackTime.toFixed(2)
+      };
+
+      const formData = new URLSearchParams();
+      formData.append("data", JSON.stringify(payload));
+
+      try {
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          body: formData
+        });
+        const text = await response.text();
+        console.log("Sheets response:", text);
+
+        if (action === "BUY") {
+          const note = document.createElement("div");
+          note.innerText = "✅ Recorded!";
+          note.style.position = "fixed";
+          note.style.bottom = "20px";
+          note.style.right = "20px";
+          note.style.background = "#4caf50";
+          note.style.color = "white";
+          note.style.padding = "10px 20px";
+          note.style.borderRadius = "8px";
+          note.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
+          document.body.appendChild(note);
+          setTimeout(() => note.remove(), 1500);
+        }
+      } catch (err) {
+        console.error("Logging error", err);
+      }
+    }
   </script>
 </body>
 </html>
