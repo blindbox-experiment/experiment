@@ -72,7 +72,7 @@
   <p id="purchases"></p>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwC2yuFCyEDXeu9VG03cb9RVrazcg2vLCZzneElUFPyI2EobE13KnlRT7ZLmrojLHdwIg/exec"; 
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyyLnYl5-FZAdKl-NYlEStnmCxeOqy9M-Zvh3en0ncp09-OFz9lEyl5ZyH6wsxL9NPkXw/exec"; 
     const VIDEOS = {
       1: "videos/video1.mp4",
       2: "videos/video2.mp4",
@@ -163,7 +163,7 @@
         timeSinceStart: elapsedTime
       };
 
-      fetch(GOOGLE_SCRIPT_URL, {
+      fetch("https://script.google.com/macros/s/AKfycbyyLnYl5-FZAdKl-NYlEStnmCxeOqy9M-Zvh3en0ncp09-OFz9lEyl5ZyH6wsxL9NPkXw/exec", {
         method: "POST",
         body: JSON.stringify(payload),
         headers: {"Content-Type": "application/json"}
