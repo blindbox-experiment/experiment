@@ -92,11 +92,12 @@
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDfqRhhO4G2wHnZ_n6CaIgrKk0CmwSVCO-kPjk4a6JZnJFThBeRShM7HrdqAA4B5hDXg/exec";
 
     const VIDEOS = {
-      1: "videos/video1.mp4",
-      2: "videos/video2.mp4",
-      3: "videos/video3.mp4",
-      4: "videos/video4.mp4"
+      1: "https://drive.google.com/uc?export=download&id=1GLtIo84CfXQZDiM9W4bmlW5lU02eZTvp", // No cues
+      2: "https://drive.google.com/uc?export=download&id=1hOdxkf0gm4uSimeR-TYAyeLoSp94WHvb", // Scarcity cue
+      3: "https://drive.google.com/uc?export=download&id=1tuyGujJ0ITGpQMXEm22tyLsX4UecQ_pK", // Social proof cue
+      4: "https://drive.google.com/uc?export=download&id=1503oZfL8kZoI8o1OHBO2WV5kVPC3oW-l"  // Both cues
     };
+
     const STARTING_CREDITS = 3000;
     const BOX_PRICE = 600;
 
@@ -104,12 +105,12 @@
 
     function generatePID() {
       const now = new Date();
-      return "P" + now.getFullYear() + 
-        (now.getMonth()+1).toString().padStart(2,'0') + 
-        now.getDate().toString().padStart(2,'0') + "_" + 
-        now.getHours().toString().padStart(2,'0') + 
-        now.getMinutes().toString().padStart(2,'0') + 
-        now.getSeconds().toString().padStart(2,'0') + "_" + 
+      return "P" + now.getFullYear() +
+        (now.getMonth()+1).toString().padStart(2,'0') +
+        now.getDate().toString().padStart(2,'0') + "_" +
+        now.getHours().toString().padStart(2,'0') +
+        now.getMinutes().toString().padStart(2,'0') +
+        now.getSeconds().toString().padStart(2,'0') + "_" +
         Math.floor(Math.random()*1000);
     }
 
