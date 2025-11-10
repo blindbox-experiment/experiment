@@ -29,9 +29,10 @@
       cursor: not-allowed;
       opacity: 0.6;
     }
-    video {
+    iframe {
       width: 360px;
-      height: 640px; /* TikTok 9:16 format */
+      height: 640px;
+      border: none;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       background: black;
@@ -76,9 +77,7 @@
       <button class="btn" onclick="loadVideo(4)">4th Video</button>
     </div>
 
-    <div class="video-container">
-      <video id="expVideo" controls playsinline></video>
-    </div>
+    <div class="video-container" id="videoContainer"></div>
 
     <div>
       <button id="buy-btn" class="btn hidden" onclick="purchase()">Buy Blind Box (₱600)</button>
@@ -92,10 +91,10 @@
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDfqRhhO4G2wHnZ_n6CaIgrKk0CmwSVCO-kPjk4a6JZnJFThBeRShM7HrdqAA4B5hDXg/exec";
 
     const VIDEOS = {
-      1: "https://drive.google.com/uc?export=download&id=1GLtIo84CfXQZDiM9W4bmlW5lU02eZTvp", // No cues
-      2: "https://drive.google.com/uc?export=download&id=1hOdxkf0gm4uSimeR-TYAyeLoSp94WHvb", // Scarcity cue
-      3: "https://drive.google.com/uc?export=download&id=1tuyGujJ0ITGpQMXEm22tyLsX4UecQ_pK", // Social proof cue
-      4: "https://drive.google.com/uc?export=download&id=1503oZfL8kZoI8o1OHBO2WV5kVPC3oW-l"  // Both cues
+      1: "https://drive.google.com/file/d/1GLtIo84CfXQZDiM9W4bmlW5lU02eZTvp/preview", // No cues
+      2: "https://drive.google.com/file/d/1hOdxkf0gm4uSimeR-TYAyeLoSp94WHvb/preview", // Scarcity cue
+      3: "https://drive.google.com/file/d/1tuyGujJ0ITGpQMXEm22tyLsX4UecQ_pK/preview", // Social proof cue
+      4: "https://drive.google.com/file/d/1503oZfL8kZoI8o1OHBO2WV5kVPC3oW-l/preview"  // Both cues
     };
 
     const STARTING_CREDITS = 3000;
@@ -140,36 +139,26 @@
         btn.disabled = true;
       });
 
-      const videoEl = document.getElementById("expVideo");
-      videoEl.src = currentVideo.file;
+      const container = document.getElementById("videoContainer");
+      container.innerHTML = `<iframe src="${currentVideo.file}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
       document.getElementById("buy-btn").classList.remove("hidden");
 
       credits = STARTING_CREDITS;
       totalPurchased = 0;
-      videoStartTime = null;
+      videoStartTime = new Date();
       updateStatus();
 
       logEvent("VIDEO_LOAD", 0, 0, 0);
-
-      videoEl.addEventListener("play", () => {
-        if (!videoStartTime) {
-          videoStartTime = new Date();
-          logEvent("VIDEO_PLAY", 0, 0, 0);
-        }
-      });
     }
 
     function purchase() {
-      const videoEl = document.getElementById("expVideo");
-      const playbackTime = videoEl.currentTime;
+      let elapsed = (new Date() - videoStartTime) / 1000;
+      let playbackTime = elapsed; // Approximation, since iframe videos can't directly return currentTime
 
       if (credits >= BOX_PRICE) {
         credits -= BOX_PRICE;
         totalPurchased++;
         updateStatus();
-
-        let elapsed = 0;
-        if (videoStartTime) elapsed = (new Date() - videoStartTime) / 1000;
         logEvent("BUY", totalPurchased, elapsed, playbackTime);
       } else {
         alert("Not enough credits!");
