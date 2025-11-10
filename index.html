@@ -29,16 +29,22 @@
       cursor: not-allowed;
       opacity: 0.6;
     }
-    iframe {
+    video {
       width: 360px;
-      height: 640px;
-      border: none;
+      height: 640px; /* TikTok 9:16 format */
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       background: black;
     }
-    #buy-btn { margin-top: 20px; background: #ff3b5c; }
-    .video-container { display: flex; justify-content: center; margin-top: 20px; }
+    #buy-btn { 
+      margin-top: 20px; 
+      background: #ff3b5c; 
+    }
+    .video-container { 
+      display: flex; 
+      justify-content: center; 
+      margin-top: 20px; 
+    }
   </style>
 </head>
 <body>
@@ -77,7 +83,9 @@
       <button class="btn" onclick="loadVideo(4)">4th Video</button>
     </div>
 
-    <div class="video-container" id="videoContainer"></div>
+    <div class="video-container">
+      <video id="expVideo" controls playsinline></video>
+    </div>
 
     <div>
       <button id="buy-btn" class="btn hidden" onclick="purchase()">Buy Blind Box (₱600)</button>
@@ -91,10 +99,10 @@
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDfqRhhO4G2wHnZ_n6CaIgrKk0CmwSVCO-kPjk4a6JZnJFThBeRShM7HrdqAA4B5hDXg/exec";
 
     const VIDEOS = {
-      1: "https://drive.google.com/file/d/1GLtIo84CfXQZDiM9W4bmlW5lU02eZTvp/preview", // No cues
-      2: "https://drive.google.com/file/d/1hOdxkf0gm4uSimeR-TYAyeLoSp94WHvb/preview", // Scarcity cue
-      3: "https://drive.google.com/file/d/1tuyGujJ0ITGpQMXEm22tyLsX4UecQ_pK/preview", // Social proof cue
-      4: "https://drive.google.com/file/d/1503oZfL8kZoI8o1OHBO2WV5kVPC3oW-l/preview"  // Both cues
+      1: "videos/video1.mp4",
+      2: "videos/video2.mp4",
+      3: "videos/video3.mp4",
+      4: "videos/video4.mp4"
     };
 
     const STARTING_CREDITS = 3000;
@@ -104,12 +112,12 @@
 
     function generatePID() {
       const now = new Date();
-      return "P" + now.getFullYear() +
-        (now.getMonth()+1).toString().padStart(2,'0') +
-        now.getDate().toString().padStart(2,'0') + "_" +
-        now.getHours().toString().padStart(2,'0') +
-        now.getMinutes().toString().padStart(2,'0') +
-        now.getSeconds().toString().padStart(2,'0') + "_" +
+      return "P" + now.getFullYear() + 
+        (now.getMonth()+1).toString().padStart(2,'0') + 
+        now.getDate().toString().padStart(2,'0') + "_" + 
+        now.getHours().toString().padStart(2,'0') + 
+        now.getMinutes().toString().padStart(2,'0') + 
+        now.getSeconds().toString().padStart(2,'0') + "_" + 
         Math.floor(Math.random()*1000);
     }
 
@@ -125,6 +133,9 @@
         return;
       }
 
+      // ✅ Hide the Buy button at the start
+      document.getElementById("buy-btn").classList.add("hidden");
+
       document.getElementById("introForm").classList.add("hidden");
       document.getElementById("experimentSection").classList.remove("hidden");
 
@@ -134,31 +145,44 @@
 
     function loadVideo(num) {
       currentVideo = {number: num, file: VIDEOS[num]};
+
       document.querySelectorAll('#videoButtons .btn').forEach(btn => {
         btn.classList.add('disabled');
         btn.disabled = true;
       });
 
-      const container = document.getElementById("videoContainer");
-      container.innerHTML = `<iframe src="${currentVideo.file}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+      const videoEl = document.getElementById("expVideo");
+      videoEl.src = currentVideo.file;
+
+      // ✅ Show Buy button only after selecting a video
       document.getElementById("buy-btn").classList.remove("hidden");
 
       credits = STARTING_CREDITS;
       totalPurchased = 0;
-      videoStartTime = new Date();
+      videoStartTime = null;
       updateStatus();
 
       logEvent("VIDEO_LOAD", 0, 0, 0);
+
+      videoEl.addEventListener("play", () => {
+        if (!videoStartTime) {
+          videoStartTime = new Date();
+          logEvent("VIDEO_PLAY", 0, 0, 0);
+        }
+      });
     }
 
     function purchase() {
-      let elapsed = (new Date() - videoStartTime) / 1000;
-      let playbackTime = elapsed; // Approximation, since iframe videos can't directly return currentTime
+      const videoEl = document.getElementById("expVideo");
+      const playbackTime = videoEl.currentTime;
 
       if (credits >= BOX_PRICE) {
         credits -= BOX_PRICE;
         totalPurchased++;
         updateStatus();
+
+        let elapsed = 0;
+        if (videoStartTime) elapsed = (new Date() - videoStartTime) / 1000;
         logEvent("BUY", totalPurchased, elapsed, playbackTime);
       } else {
         alert("Not enough credits!");
