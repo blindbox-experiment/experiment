@@ -16,20 +16,22 @@
     h1 {
       font-size: 1.8em;
       margin-top: 20px;
+      font-weight: 700;
     }
 
     .hidden { display: none; }
 
     .btn {
       display: inline-block;
-      margin: 10px;
+      margin: 8px;
       padding: 12px 20px;
       border: none;
-      border-radius: 6px;
+      border-radius: 10px;
       background: #333;
       color: white;
       cursor: pointer;
       font-size: 16px;
+      font-weight: 500;
       transition: 0.3s;
     }
 
@@ -42,17 +44,20 @@
       opacity: 0.6;
     }
 
-    /* Pink buy button */
+    /* ✅ Pink buy button override */
     #buy-btn {
       margin-top: 20px;
       background: #ff3b5c;
-      color: white;
-      font-weight: bold;
-      transition: background 0.3s;
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 4px 10px rgba(255, 59, 92, 0.3);
+      transition: all 0.3s ease;
     }
 
     #buy-btn:hover {
       background: #e03552;
+      box-shadow: 0 6px 12px rgba(255, 59, 92, 0.4);
+      transform: scale(1.05);
     }
 
     iframe {
@@ -60,10 +65,10 @@
       max-width: 360px;
       height: 640px;
       border: none;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      border-radius: 14px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
       background: black;
-      pointer-events: none; /* disables user control */
+      pointer-events: none; /* disables user controls like seeking */
     }
 
     .video-container {
@@ -72,13 +77,10 @@
       margin-top: 20px;
     }
 
-    @media (max-width: 480px) {
-      iframe {
-        width: 95%;
-        height: 75vh;
-      }
+    @media (max-width: 600px) {
       h1 { font-size: 1.4em; }
       .btn { font-size: 14px; padding: 10px 16px; }
+      iframe { width: 95%; height: 70vh; }
     }
   </style>
 </head>
