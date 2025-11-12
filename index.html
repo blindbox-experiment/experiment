@@ -9,6 +9,8 @@
       --max-width: 420px;
       --gap: 12px;
       --btn-size: 16px;
+      --pink: #ff3b5c;
+      --pink-dark: #e03552;
     }
     html,body{ height:100%; margin:0; }
     body {
@@ -46,6 +48,18 @@
     .btn.large { padding: 16px 22px; min-width: 140px; font-size: 18px; }
     .btn.disabled { background:#ccc; color:#666; cursor:not-allowed; opacity:0.8; }
 
+    /* BUY button (changed to pink) */
+    #buy-btn{
+      background: var(--pink);
+      color: white;
+      border-radius: 12px;
+      padding: 12px 22px;
+      font-weight: 700;
+      box-shadow: 0 8px 20px rgba(255,59,92,0.18);
+      border: 0;
+    }
+    #buy-btn:hover { background: var(--pink-dark); }
+
     label { font-size:0.95rem; }
     input[type="number"]{ padding:8px; border-radius:8px; border:1px solid #ddd; width:120px; font-size:1rem; margin-top:6px; }
     select { padding:8px; border-radius:8px; border:1px solid #ddd; font-size:1rem; margin-top:6px; }
@@ -58,8 +72,7 @@
     .video-frame {
       position: relative;
       width: 100%;
-      /* 9:16 ratio -> padding-top = 16/9 * 100% = 177.78% ; but because width is vertical, we want height larger than width.
-         For vertical video, use padding-top to set height relative to width:  (16/9)*100% = 177.78% */
+      /* 9:16 ratio -> padding-top = 16/9 * 100% = 177.78% */
       padding-top: 177.78%;
       background:#000;
       border-radius:14px;
