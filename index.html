@@ -1,232 +1,273 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TikTok Live Blind Box Experiment</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background: #fafafa;
-      margin: 0;
-      padding: 1rem;
-    }
-    h1 {
-      font-size: 1.3rem;
-      margin-bottom: 0.5rem;
-    }
-    .hidden { display: none; }
-    .btn {
-      margin: 10px;
-      padding: 12px 20px;
-      border: none;
-      border-radius: 10px;
-      background: #333;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .btn:hover { background: #555; }
-    .btn.disabled {
-      background: #ccc;
-      color: #666;
-      cursor: not-allowed;
-    }
-    #buy-btn {
-      background: #ff3b5c;
-      box-shadow: 0 4px 10px rgba(255,59,92,0.3);
-      font-weight: 600;
-    }
-    #buy-btn:hover {
-      background: #e03552;
-    }
-    video {
-      width: 100%;
-      max-width: 380px;
-      height: auto;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      background: black;
-    }
-    .video-container {
-      display: flex;
-      justify-content: center;
-      margin-top: 20px;
-    }
-    @media (max-width: 480px) {
-      video { max-width: 320px; }
-      .btn { font-size: 14px; padding: 10px 14px; }
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>TikTok Live Blind Box Experiment</title>
+<style>
+  :root{
+    --bg:#fafafa; --muted:#999; --dark:#333;
+    --pink:#ff3b5c; --pink-h:#e03552;
+    --maxWidth:420px;
+  }
+  html,body{height:100%; margin:0; font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:var(--bg); color:#111;}
+  .wrap{max-width:980px; margin:0 auto; padding:20px; text-align:center;}
+  h1{margin:6px 0 14px; font-size:20px; font-weight:700;}
+  p.lead{margin:0 0 18px; color:var(--muted);}
+
+  /* participant form */
+  .card{background:#fff; border-radius:12px; padding:14px; box-shadow:0 8px 24px rgba(0,0,0,0.04); display:inline-block; width:100%; max-width:var(--maxWidth);}
+  .form-row{display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap; margin:8px 0;}
+  input[type=number], select{padding:8px 10px; border-radius:8px; border:1px solid #e6e6e6; font-size:14px; min-width:120px;}
+  label{font-size:14px; color:#333; margin-right:6px;}
+
+  /* buttons */
+  .pill-btn{
+    display:inline-block; min-width:110px; padding:12px 20px; margin:8px;
+    border-radius:14px; border:0; background:#eee; color:#555; font-weight:600; cursor:pointer;
+    box-shadow:none; transition:all .18s ease; font-size:15px;
+  }
+  .pill-btn:hover{ transform:translateY(-2px); box-shadow:0 8px 18px rgba(0,0,0,0.06); }
+  .pill-btn.disabled{ background:#e9e9e9; color:#999; cursor:not-allowed; transform:none; box-shadow:none; }
+
+  /* buy button (pink) */
+  #buy-btn{ background:var(--pink); color:#fff; padding:12px 22px; border-radius:14px; border:0;
+    font-size:16px; font-weight:700; box-shadow:0 10px 24px rgba(255,59,92,0.18); cursor:pointer; margin-top:14px;
+  }
+  #buy-btn:hover{ background:var(--pink-h); transform:translateY(-2px); }
+
+  /* video */
+  .video-area{ margin:22px auto 8px; width:100%; display:flex; justify-content:center; }
+  .player {
+    width:360px; height:640px; max-width:92vw; max-height:82vh;
+    border-radius:14px; overflow:hidden; background:#000; box-shadow:0 12px 30px rgba(0,0,0,0.12);
+    display:block;
+  }
+
+  /* status */
+  .status { margin-top:14px; color:#222; font-weight:600; }
+
+  @media (max-width:480px){
+    h1{font-size:18px;}
+    .pill-btn{min-width:88px; padding:10px 14px; font-size:14px;}
+    #buy-btn{width:88%; max-width:320px;}
+  }
+</style>
 </head>
 <body>
-  <h1>TikTok Live Blind Box Experiment</h1>
+  <div class="wrap">
+    <h1>TikTok Live Blind Box Experiment</h1>
+    <p class="lead">Select a video to start:</p>
 
-  <!-- Participant Info Form -->
-  <div id="introForm">
-    <h3>Before we begin, please enter your details:</h3>
-    <label>Age: </label>
-    <input type="number" id="ageInput" min="15" max="40" required><br><br>
+    <!-- Participant form card -->
+    <div id="introCard" class="card" style="margin-bottom:16px;">
+      <div style="font-weight:700; margin-bottom:8px;">Before we begin — enter your details</div>
+      <div class="form-row">
+        <label for="ageInput">Age</label>
+        <input id="ageInput" type="number" min="15" max="40" placeholder="e.g. 21">
+      </div>
+      <div class="form-row">
+        <label>Sex (F/M)</label>
+        <label><input type="radio" name="sex" value="M"> M</label>
+        <label><input type="radio" name="sex" value="F"> F</label>
+      </div>
+      <div class="form-row">
+        <label for="yearInput">Year Level</label>
+        <select id="yearInput">
+          <option value="">Choose</option>
+          <option value="Freshman">Freshman</option>
+          <option value="Sophomore">Sophomore</option>
+          <option value="Junior">Junior</option>
+          <option value="Senior">Senior</option>
+        </select>
+      </div>
+      <div style="margin-top:8px;">
+        <button class="pill-btn" onclick="startExperiment()">Continue</button>
+      </div>
+    </div>
 
-    <label>Sex (F/M): </label>
-    <label><input type="radio" name="sex" value="M"> Male</label>
-    <label><input type="radio" name="sex" value="F"> Female</label><br><br>
+    <!-- Experiment area (initially hidden) -->
+    <div id="experiment" class="card hidden">
+      <div style="margin-bottom:12px;">
+        <button class="pill-btn" id="b1" onclick="loadVideo(1)">1st Video</button>
+        <button class="pill-btn" id="b2" onclick="loadVideo(2)">2nd Video</button>
+        <button class="pill-btn" id="b3" onclick="loadVideo(3)">3rd Video</button>
+        <button class="pill-btn" id="b4" onclick="loadVideo(4)">4th Video</button>
+      </div>
 
-    <label>Year Level:</label>
-    <select id="yearInput" required>
-      <option value="">Select Year Level</option>
-      <option value="Freshman">Freshman</option>
-      <option value="Sophomore">Sophomore</option>
-      <option value="Junior">Junior</option>
-      <option value="Senior">Senior</option>
-    </select><br><br>
+      <div class="video-area">
+        <!-- Native HTML5 video is injected here -->
+        <video id="expVideo" class="player" playsinline preload="auto" muted></video>
+      </div>
 
-    <button class="btn" onclick="startExperiment()">Continue</button>
+      <div>
+        <button id="buy-btn" class="hidden" onclick="purchase()">Buy Blind Box (₱600)</button>
+      </div>
+
+      <div class="status" id="statusText">Credits Remaining: ₱0 &nbsp; · &nbsp; Blind Boxes Purchased: 0</div>
+    </div>
   </div>
 
-  <!-- Experiment Section -->
-  <div id="experimentSection" class="hidden">
-    <p>Select a video to start:</p>
-    <div id="videoButtons">
-      <button class="btn" onclick="loadVideo(1)">1st Video</button>
-      <button class="btn" onclick="loadVideo(2)">2nd Video</button>
-      <button class="btn" onclick="loadVideo(3)">3rd Video</button>
-      <button class="btn" onclick="loadVideo(4)">4th Video</button>
-    </div>
+<script>
+/* ---------- CONFIG ---------- */
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDfqRhhO4G2wHnZ_n6CaIgrKk0CmwSVCO-kPjk4a6JZnJFThBeRShM7HrdqAA4B5hDXg/exec";
 
-    <div class="video-container">
-      <video id="expVideo" playsinline preload="auto" muted></video>
-    </div>
+const VIDEOS = {
+  1: "https://www.dropbox.com/scl/fi/qkqzkagt9asleu9w0pxsw/video1.mp4?raw=1", // control
+  2: "https://www.dropbox.com/scl/fi/kv2c8lpch762m8wocc9cz/video2.mp4?raw=1", // scarcity
+  3: "https://www.dropbox.com/scl/fi/r1i1ayy49itvh19tvp3cd/video3.mp4?raw=1", // social proof
+  4: "https://www.dropbox.com/scl/fi/vv2njgbiqe54dxcxxp89x/video4.mp4?raw=1"  // both
+};
 
-    <div>
-      <button id="buy-btn" class="btn hidden" onclick="purchase()">Buy Blind Box (₱600)</button>
-    </div>
+const STARTING_CREDITS = 3000;
+const BOX_PRICE = 600;
 
-    <p id="credits"></p>
-    <p id="purchases"></p>
-  </div>
+/* ---------- STATE ---------- */
+let participantID = null;
+let currentVideo = null;
+let credits = STARTING_CREDITS;
+let totalPurchased = 0;
+let videoStartTime = null;
+let age = "", sex = "", yearLevel = "";
 
-  <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDfqRhhO4G2wHnZ_n6CaIgrKk0CmwSVCO-kPjk4a6JZnJFThBeRShM7HrdqAA4B5hDXg/exec";
+/* ---------- HELPERS ---------- */
+function generatePID(){
+  const n = new Date();
+  return "P" + n.getFullYear()
+    + String(n.getMonth()+1).padStart(2,'0')
+    + String(n.getDate()).padStart(2,'0') + "_"
+    + String(n.getHours()).padStart(2,'0')
+    + String(n.getMinutes()).padStart(2,'0')
+    + String(n.getSeconds()).padStart(2,'0') + "_"
+    + Math.floor(Math.random()*1000);
+}
+function updateStatus(){
+  document.getElementById("statusText").innerText =
+    `Credits Remaining: ₱${credits} · Blind Boxes Purchased: ${totalPurchased}`;
+}
 
-    const VIDEOS = {
-      1: "https://www.dropbox.com/scl/fi/qkqzkagt9asleu9w0pxsw/video1.mp4?raw=1",
-      2: "https://www.dropbox.com/scl/fi/kv2c8lpch762m8wocc9cz/video2.mp4?raw=1",
-      3: "https://www.dropbox.com/scl/fi/r1i1ayy49itvh19tvp3cd/video3.mp4?raw=1",
-      4: "https://www.dropbox.com/scl/fi/vv2njgbiqe54dxcxxp89x/video4.mp4?raw=1"
-    };
+/* ---------- FLOWS ---------- */
+function startExperiment(){
+  age = (document.getElementById("ageInput").value || "").toString().trim();
+  const radios = document.getElementsByName("sex");
+  const sel = [...radios].find(r=>r.checked);
+  sex = sel ? sel.value : "";
+  yearLevel = document.getElementById("yearInput").value || "";
 
-    const STARTING_CREDITS = 3000;
-    const BOX_PRICE = 600;
+  if(!age || !sex || !yearLevel){
+    alert("Please complete Age, Sex, and Year Level to continue.");
+    return;
+  }
 
-    let participantID, currentVideo, credits, totalPurchased, videoStartTime, age, sex, yearLevel;
+  participantID = generatePID();
+  document.getElementById("introCard").classList.add("hidden");
+  document.getElementById("experiment").classList.remove("hidden");
 
-    function generatePID() {
-      const now = new Date();
-      return "P" + now.getFullYear() +
-        (now.getMonth()+1).toString().padStart(2,'0') +
-        now.getDate().toString().padStart(2,'0') + "_" +
-        now.getHours().toString().padStart(2,'0') +
-        now.getMinutes().toString().padStart(2,'0') +
-        now.getSeconds().toString().padStart(2,'0') + "_" +
-        Math.floor(Math.random()*1000);
-    }
+  // log form submit
+  logEvent("FORM_SUBMIT", 0, 0, 0);
+  credits = STARTING_CREDITS;
+  totalPurchased = 0;
+  updateStatus();
+}
 
-    function startExperiment() {
-      age = document.getElementById("ageInput").value.trim();
-      const sexRadios = document.getElementsByName("sex");
-      const selected = [...sexRadios].find(r => r.checked);
-      sex = selected ? selected.value : "";
-      yearLevel = document.getElementById("yearInput").value;
+/* Load and play the native video (Dropbox streaming link) */
+function loadVideo(num){
+  currentVideo = { number: num, file: VIDEOS[num] };
 
-      if (!age || !sex || !yearLevel) {
-        alert("Please enter Age, Sex, and Year Level before continuing.");
-        return;
-      }
+  // disable condition buttons (prevent switching)
+  [1,2,3,4].forEach(i=>{
+    const b = document.getElementById("b"+i);
+    if(b) { b.classList.add("disabled"); b.disabled = true; }
+  });
 
-      document.getElementById("introForm").classList.add("hidden");
-      document.getElementById("experimentSection").classList.remove("hidden");
+  const v = document.getElementById("expVideo");
+  v.src = currentVideo.file;
+  v.muted = true;        // muted to increase autoplay reliability
+  v.controls = false;    // hide controls (prevent seeking UI)
+  v.currentTime = 0;
+  // try play; if autoplay blocked, the user can tap play
+  const playPromise = v.play();
+  // record start only when 'playing' fires (actual playback)
+  videoStartTime = null;
+  v.removeEventListener("playing", handlePlaying);
+  v.addEventListener("playing", handlePlaying);
+  // show buy button only after load attempt
+  document.getElementById("buy-btn").classList.remove("hidden");
 
-      participantID = generatePID();
-      logEvent("FORM_SUBMIT", 0, 0, 0);
-    }
+  credits = STARTING_CREDITS;
+  totalPurchased = 0;
+  updateStatus();
 
-    function loadVideo(num) {
-      currentVideo = {number: num, file: VIDEOS[num]};
-      document.querySelectorAll('#videoButtons .btn').forEach(btn => {
-        btn.classList.add('disabled');
-        btn.disabled = true;
-      });
+  // Prevent forward seeking attempts: if seeking occurs, revert back to previous time
+  v.addEventListener("seeking", function(e){
+    // reset to last allowed time (disallow large jumps)
+    // user may still drag but we immediately force back to currentTime (no UI controls shown)
+    try{ v.currentTime = Math.min(v.currentTime, v.duration || v.currentTime); }catch(err){}
+  }, {passive:false});
 
-      const videoEl = document.getElementById("expVideo");
-      videoEl.src = currentVideo.file;
-      videoEl.currentTime = 0;
-      videoEl.muted = false;
-      videoEl.controls = false; // disable controls (no scrubbing)
-      videoEl.play();
-      document.getElementById("buy-btn").classList.remove("hidden");
+  logEvent("VIDEO_LOAD", 0, 0, 0);
 
-      credits = STARTING_CREDITS;
-      totalPurchased = 0;
-      videoStartTime = new Date();
-      updateStatus();
+  // if autoplay promise rejects, do nothing — user can tap video to play
+  if (playPromise !== undefined) {
+    playPromise.catch(err => {
+      // autoplay blocked — video will wait for user play (that's ok)
+      console.warn("Autoplay blocked:", err);
+    });
+  }
+}
 
-      logEvent("VIDEO_LOAD", 0, 0, 0);
+function handlePlaying(){
+  if(!videoStartTime){
+    videoStartTime = new Date();
+    logEvent("VIDEO_PLAY", 0, 0, 0);
+  }
+}
 
-      // Prevent scrubbing by forcing time back if user tries
-      videoEl.addEventListener("seeking", function() {
-        videoEl.currentTime = Math.min(videoEl.currentTime, videoEl.duration);
-      });
-    }
+/* Purchase flow */
+function purchase(){
+  const v = document.getElementById("expVideo");
+  const playbackTime = (v && !isNaN(v.currentTime)) ? v.currentTime : 0;
+  const elapsed = videoStartTime ? (new Date() - videoStartTime) / 1000 : 0;
 
-    function purchase() {
-      const videoEl = document.getElementById("expVideo");
-      const playbackTime = videoEl.currentTime;
-      if (credits >= BOX_PRICE) {
-        credits -= BOX_PRICE;
-        totalPurchased++;
-        updateStatus();
+  if(credits >= BOX_PRICE){
+    credits -= BOX_PRICE;
+    totalPurchased++;
+    updateStatus();
+    logEvent("BUY", totalPurchased, elapsed, playbackTime);
+  } else {
+    alert("Not enough credits!");
+  }
+}
 
-        let elapsed = 0;
-        if (videoStartTime) elapsed = (new Date() - videoStartTime) / 1000;
-        logEvent("BUY", totalPurchased, elapsed, playbackTime);
-      } else {
-        alert("Not enough credits!");
-      }
-    }
+/* ---------- Logging ---------- */
+function logEvent(action, purchases, elapsedTime, playbackTime){
+  const payload = {
+    timestamp: new Date().toISOString(),
+    pid: participantID || "N/A",
+    age: age || "N/A",
+    sex: sex || "N/A",
+    yearLevel: yearLevel || "N/A",
+    videoNumber: currentVideo ? currentVideo.number : "",
+    videoFile: currentVideo ? currentVideo.file : "",
+    action: action,
+    creditsRemaining: credits,
+    totalPurchased: purchases,
+    timeSinceStart: elapsedTime,
+    videoPlaybackTime: playbackTime
+  };
 
-    function updateStatus() {
-      document.getElementById("credits").innerText = "Credits Remaining: ₱" + credits;
-      document.getElementById("purchases").innerText = "Blind Boxes Purchased: " + totalPurchased;
-    }
+  const body = "data=" + encodeURIComponent(JSON.stringify(payload));
+  fetch(GOOGLE_SCRIPT_URL, {
+    method: "POST",
+    headers: {"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"},
+    body
+  })
+  .then(r => r.text()).then(t=>console.log("Sheets:",t)).catch(e=>console.error("Logging error",e));
+}
 
-    function logEvent(action, purchases, elapsedTime, playbackTime) {
-      const payload = {
-        timestamp: new Date().toISOString(),
-        pid: participantID || "N/A",
-        age: age || "N/A",
-        sex: sex || "N/A",
-        yearLevel: yearLevel || "N/A",
-        videoNumber: currentVideo ? currentVideo.number : "",
-        videoFile: currentVideo ? currentVideo.file : "",
-        action: action,
-        creditsRemaining: credits,
-        totalPurchased: purchases,
-        timeSinceStart: elapsedTime,
-        videoPlaybackTime: playbackTime
-      };
-
-      const body = "data=" + encodeURIComponent(JSON.stringify(payload));
-      fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        headers: {"Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"},
-        body
-      })
-      .then(r => r.text())
-      .then(txt => console.log("Sheets response:", txt))
-      .catch(err => console.error("Logging error", err));
-    }
-  </script>
+/* Expose to console for quick testing if needed */
+window.loadVideo = loadVideo;
+window.purchase = purchase;
+</script>
 </body>
 </html>
