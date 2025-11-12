@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>TikTok Live Blind Box Experiment — Drive direct + fallback</title>
+<title>TikTok Live Blind Box Experiment — controls enabled</title>
 <style>
   :root{--pink:#ff3b5c;--pink-h:#e03552;--bg:#fafafa;--muted:#888;}
   body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);margin:0;padding:18px;text-align:center;color:#111;}
@@ -54,9 +54,9 @@
     </div>
 
     <div class="video-wrap" id="videoWrap">
-      <!-- native video element (will be used if direct serve succeeds) -->
+      <!-- native video element -->
       <video id="nativeVideo" playsinline preload="auto" style="display:none;" crossorigin="anonymous"></video>
-      <!-- fallback iframe area (hidden until needed) -->
+      <!-- fallback iframe area -->
       <div id="iframeArea" class="iframe-frame" style="display:none;"></div>
     </div>
 
@@ -68,14 +68,13 @@
 /* ---------- CONFIG ---------- */
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDfqRhhO4G2wHnZ_n6CaIgrKk0CmwSVCO-kPjk4a6JZnJFThBeRShM7HrdqAA4B5hDXg/exec";
 
-/* NEW Drive file IDs from your links */
+/* Drive file IDs (your most recent links) */
 const DRIVE_IDS = {
   1: "1r6tXOccwsWd0UmhMWMH9H5bCUdjprucy",
   2: "1Oj7kbstiuW9azTy1n93c-tN_7LpmmXmd",
   3: "1qvO5WOyskRm2g2F0o8n0DnjZCDtBEqIW",
   4: "157K9XHgY_PGPFz0v4ldX1QFmEAYNaCWg"
 };
-
 function driveDirect(id){ return `https://docs.google.com/uc?export=download&id=${id}`; }
 function drivePreview(id){ return `https://drive.google.com/file/d/${id}/preview`; }
 
@@ -106,13 +105,12 @@ function startExperiment(){
   logEvent("FORM_SUBMIT",0,0,0);
 }
 
-/* tryLoad: attempt native <video> with Drive direct URL; fallback to iframe overlay if fails */
+/* tryLoad: attempt native <video> with Drive direct URL; fallback to iframe if native fails */
 function tryLoad(num){
   currentVideo = num;
   // disable buttons
   [1,2,3,4].forEach(i => { const b=document.getElementById("b"+i); if(b){ b.disabled=true; b.classList.add("disabled"); } });
 
-  // prepare native video
   const native = document.getElementById("nativeVideo");
   native.pause();
   native.removeAttribute("src");
@@ -123,67 +121,58 @@ function tryLoad(num){
 
   const direct = driveDirect(DRIVE_IDS[num]);
   native.src = direct;
-  native.muted = true;              // muted helps autoplay
-  native.controls = false;
+  native.muted = true;      // muted helps autoplay
+  native.controls = true;   // ENABLE controls so user can play and scrub
   videoStartTime = null;
   document.getElementById("buy-btn").style.display = "none";
 
-  // set up timeouts and event handlers
-  let canPlayFired = false;
+  // handlers
   let playingFired = false;
-  let stalledTimer = null;
   const playingHandler = () => {
     playingFired = true;
     if(!videoStartTime){ videoStartTime = new Date(); logEvent("VIDEO_PLAY",0,0,0); }
     clearTimeout(stalledTimer);
-    // show buy button once playback started
+    // show buy button once playback actually started
     document.getElementById("buy-btn").style.display = "inline-block";
   };
   const canPlayHandler = () => {
-    canPlayFired = true;
-    // try to start playing (muted autoplay)
+    // try to autoplay (may be blocked); whether autoplay or user-play, we wait for 'playing' event
     const p = native.play();
-    if(p && typeof p.catch === "function"){
+    if (p && typeof p.catch === "function") {
       p.catch(err => {
-        // autoplay blocked — fallback to overlay iframe
-        console.warn("autoplay blocked or failed:", err);
-        fallbackToIframe(num);
+        // autoplay blocked - user can press play (controls are visible)
+        console.warn("autoplay blocked:", err);
+        // we still show buy button only after 'playing' event
       });
     }
-    // set a fallback timer: if not playing within 8s, fallback
-    stalledTimer = setTimeout(()=> {
-      if(!playingFired){
-        console.warn("native playback not starting — falling back to iframe");
-        fallbackToIframe(num);
-      }
-    }, 8000);
   };
 
+  const nativeError = (e) => {
+    console.error("native video error:", e);
+    if(currentVideo) fallbackToIframe(currentVideo);
+  };
+
+  // cleanup old listeners and add new ones
   native.removeEventListener("playing", playingHandler);
   native.removeEventListener("canplay", canPlayHandler);
-  native.removeEventListener("error", nativeErrorHandler);
+  native.removeEventListener("error", nativeError);
 
   native.addEventListener("playing", playingHandler);
   native.addEventListener("canplay", canPlayHandler);
-  native.addEventListener("error", nativeErrorHandler);
+  native.addEventListener("error", nativeError);
 
-  // Prevent forward seeking attempts: if seeking occurs, revert back to previous time
-  native.addEventListener("seeking", function(e){
-    try{ native.currentTime = Math.min(native.currentTime, native.duration || native.currentTime); }catch(err){}
-  }, {passive:false});
+  // fallback timer if playback never starts
+  let stalledTimer = setTimeout(()=> {
+    if(!playingFired){
+      console.warn("native playback not starting — falling back to iframe");
+      fallbackToIframe(num);
+    }
+  }, 10000); // 10s
 
-  // try to load (browser will attempt streaming)
   native.load();
-
-  // log load attempt
   logEvent("VIDEO_LOAD",0,0,0);
 }
-function nativeErrorHandler(e){
-  console.error("native video error:", e);
-  if(currentVideo) fallbackToIframe(currentVideo);
-}
 
-/* fallback: show Drive preview iframe + Start overlay */
 function fallbackToIframe(num){
   try {
     const native = document.getElementById("nativeVideo");
