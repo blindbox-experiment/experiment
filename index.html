@@ -1,44 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TikTok Live Blind Box Experiment</title>
   <style>
+    :root{
+      --max-width: 420px;
+      --gap: 12px;
+      --btn-size: 16px;
+    }
+    html,body{ height:100%; margin:0; }
     body {
-      font-family: Arial, sans-serif;
+      font-family: Arial, Helvetica, sans-serif;
       text-align: center;
       background: #fafafa;
+      color: #111;
+      padding: 16px;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing:antialiased;
     }
-    .hidden { display: none; }
+
+    h1{ font-size:1.25rem; margin:0 0 10px; }
+    p{ margin:8px 0; font-size:0.95rem; }
+
+    .hidden { display: none !important; }
+
+    /* Buttons - touch-friendly */
     .btn {
       display: inline-block;
-      margin: 10px;
-      padding: 12px 20px;
+      margin: var(--gap) 6px;
+      padding: 14px 18px;
       border: none;
-      border-radius: 6px;
-      background: #333;
+      border-radius: 10px;
+      background: #232323;
       color: white;
       cursor: pointer;
-      font-size: 16px;
-      transition: opacity 0.3s;
+      font-size: var(--btn-size);
+      line-height:1;
+      min-width: 120px;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+      touch-action: manipulation;
     }
-    .btn:hover { background: #555; }
-    .btn.disabled {
-      background: #ccc;
-      color: #666;
-      cursor: not-allowed;
-      opacity: 0.6;
+    .btn:active { transform: translateY(1px); }
+    .btn.large { padding: 16px 22px; min-width: 140px; font-size: 18px; }
+    .btn.disabled { background:#ccc; color:#666; cursor:not-allowed; opacity:0.8; }
+
+    label { font-size:0.95rem; }
+    input[type="number"]{ padding:8px; border-radius:8px; border:1px solid #ddd; width:120px; font-size:1rem; margin-top:6px; }
+    select { padding:8px; border-radius:8px; border:1px solid #ddd; font-size:1rem; margin-top:6px; }
+
+    /* Responsive video container maintaining 9:16 aspect ratio */
+    .video-wrapper {
+      width: min(var(--max-width), 94vw);
+      margin: 14px auto 8px;
     }
-    iframe {
-      width: 360px;
-      height: 640px;
-      border: none;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      background: black;
+    .video-frame {
+      position: relative;
+      width: 100%;
+      /* 9:16 ratio -> padding-top = 16/9 * 100% = 177.78% ; but because width is vertical, we want height larger than width.
+         For vertical video, use padding-top to set height relative to width:  (16/9)*100% = 177.78% */
+      padding-top: 177.78%;
+      background:#000;
+      border-radius:14px;
+      overflow:hidden;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
     }
-    #buy-btn { margin-top: 20px; background: #ff3b5c; }
-    .video-container { display: flex; justify-content: center; margin-top: 20px; }
+    /* iframe or video full cover */
+    .video-frame iframe,
+    .video-frame video {
+      position: absolute;
+      left:0; top:0; width:100%; height:100%;
+      border:0;
+      display:block;
+    }
+
+    /* form & layout tweaks for small screens */
+    .form-row { margin:10px 0; display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap; }
+    .small-note { font-size:0.82rem; color:#555; margin-top:6px; }
+
+    /* status text */
+    #credits,#purchases { margin-top:10px; font-weight:600; }
+
+    @media (min-width:600px){
+      h1{ font-size:1.5rem; }
+      :root{ --max-width: 360px; --btn-size:16px; }
+    }
   </style>
 </head>
 <body>
@@ -48,39 +95,52 @@
   <div id="introForm">
     <h3>Before we begin, please enter your details:</h3>
 
-    <label>Age: </label>
-    <input type="number" id="ageInput" min="15" max="40" required><br><br>
+    <div class="form-row">
+      <label for="ageInput">Age:</label>
+      <input type="number" id="ageInput" min="15" max="40" placeholder="e.g. 20" />
+    </div>
 
-    <label>Sex (F/M): </label>
-    <label><input type="radio" name="sex" value="M"> Male</label>
-    <label><input type="radio" name="sex" value="F"> Female</label><br><br>
+    <div class="form-row" style="justify-content:center;">
+      <label>Sex (F/M):</label>
+      <label style="margin-left:8px;"><input type="radio" name="sex" value="M"> Male</label>
+      <label style="margin-left:8px;"><input type="radio" name="sex" value="F"> Female</label>
+    </div>
 
-    <label>Year Level:</label>
-    <select id="yearInput" required>
-      <option value="">Select Year Level</option>
-      <option value="Freshman">Freshman</option>
-      <option value="Sophomore">Sophomore</option>
-      <option value="Junior">Junior</option>
-      <option value="Senior">Senior</option>
-    </select><br><br>
+    <div class="form-row">
+      <label for="yearInput">Year Level:</label>
+      <select id="yearInput">
+        <option value="">Select Year Level</option>
+        <option value="Freshman">Freshman</option>
+        <option value="Sophomore">Sophomore</option>
+        <option value="Junior">Junior</option>
+        <option value="Senior">Senior</option>
+      </select>
+    </div>
 
-    <button class="btn" onclick="startExperiment()">Continue</button>
+    <div style="margin-top:10px;">
+      <button class="btn large" onclick="startExperiment()">Continue</button>
+    </div>
+    <div class="small-note">Use a phone or tablet in portrait orientation for the intended experience.</div>
   </div>
 
   <!-- Experiment Section -->
   <div id="experimentSection" class="hidden">
     <p>Select a video to start:</p>
-    <div id="videoButtons">
+    <div id="videoButtons" style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:10px;">
       <button class="btn" onclick="loadVideo(1)">1st Video</button>
       <button class="btn" onclick="loadVideo(2)">2nd Video</button>
       <button class="btn" onclick="loadVideo(3)">3rd Video</button>
       <button class="btn" onclick="loadVideo(4)">4th Video</button>
     </div>
 
-    <div class="video-container" id="videoContainer"></div>
+    <div class="video-wrapper">
+      <div class="video-frame" id="videoFrame">
+        <!-- iframe or video inserted here dynamically -->
+      </div>
+    </div>
 
     <div>
-      <button id="buy-btn" class="btn hidden" onclick="purchase()">Buy Blind Box (₱600)</button>
+      <button id="buy-btn" class="btn large hidden" onclick="purchase()">Buy Blind Box (₱600)</button>
     </div>
 
     <p id="credits"></p>
@@ -88,8 +148,10 @@
   </div>
 
   <script>
+    // === CONFIG - keep your Google Script URL here ===
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDfqRhhO4G2wHnZ_n6CaIgrKk0CmwSVCO-kPjk4a6JZnJFThBeRShM7HrdqAA4B5hDXg/exec";
 
+    // If you're using Google Drive preview links use /preview ; if using direct MP4 URLs point them here instead.
     const VIDEOS = {
       1: "https://drive.google.com/file/d/1GLtIo84CfXQZDiM9W4bmlW5lU02eZTvp/preview", // No cues
       2: "https://drive.google.com/file/d/1hOdxkf0gm4uSimeR-TYAyeLoSp94WHvb/preview", // Scarcity cue
@@ -100,9 +162,10 @@
     const STARTING_CREDITS = 3000;
     const BOX_PRICE = 600;
 
-    let participantID, currentVideo, credits, totalPurchased, videoStartTime, age, sex, yearLevel;
+    let participantID = null, currentVideo = null, credits = STARTING_CREDITS, totalPurchased = 0, videoStartTime = null, age = "", sex = "", yearLevel = "";
 
-    function generatePID() {
+    // Generate unique PID
+    function generatePID(){
       const now = new Date();
       return "P" + now.getFullYear() +
         (now.getMonth()+1).toString().padStart(2,'0') +
@@ -113,14 +176,14 @@
         Math.floor(Math.random()*1000);
     }
 
-    function startExperiment() {
-      age = document.getElementById("ageInput").value.trim();
+    function startExperiment(){
+      age = (document.getElementById("ageInput").value || "").toString().trim();
       const sexRadios = document.getElementsByName("sex");
-      const selected = [...sexRadios].find(r => r.checked);
-      sex = selected ? selected.value : "";
-      yearLevel = document.getElementById("yearInput").value;
+      const sel = [...sexRadios].find(r => r.checked);
+      sex = sel ? sel.value : "";
+      yearLevel = document.getElementById("yearInput").value || "";
 
-      if (!age || !sex || !yearLevel) {
+      if(!age || !sex || !yearLevel){
         alert("Please enter Age, Sex, and Year Level before continuing.");
         return;
       }
@@ -129,33 +192,75 @@
       document.getElementById("experimentSection").classList.remove("hidden");
 
       participantID = generatePID();
+      credits = STARTING_CREDITS;
+      totalPurchased = 0;
+      updateStatus();
+
       logEvent("FORM_SUBMIT", 0, 0, 0);
+      // ensure buy button hidden until they pick a video
+      document.getElementById("buy-btn").classList.add("hidden");
     }
 
-    function loadVideo(num) {
-      currentVideo = {number: num, file: VIDEOS[num]};
-      document.querySelectorAll('#videoButtons .btn').forEach(btn => {
-        btn.classList.add('disabled');
-        btn.disabled = true;
-      });
+    // Load video (inject iframe or <video> depending on link)
+    function loadVideo(num){
+      currentVideo = { number: num, file: VIDEOS[num] };
 
-      const container = document.getElementById("videoContainer");
-      container.innerHTML = `<iframe src="${currentVideo.file}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+      // disable buttons so they can't switch condition
+      document.querySelectorAll('#videoButtons .btn').forEach(b => { b.classList.add('disabled'); b.disabled=true; });
+
+      const frame = document.getElementById("videoFrame");
+      frame.innerHTML = ""; // clear
+
+      // If VIDEO string looks like a direct mp4 file (.mp4 or ?raw=1), use native video element (better mobile control).
+      const url = currentVideo.file;
+      const isDirectMp4 = url.match(/\.mp4(\?|$)/i) || url.includes("?raw=1");
+
+      if(isDirectMp4){
+        const v = document.createElement("video");
+        v.setAttribute("playsinline",""); // mobile inline playback
+        v.setAttribute("webkit-playsinline",""); 
+        v.setAttribute("muted",""); // muted may allow autoplay on mobile
+        v.setAttribute("preload","metadata");
+        v.controls = true; // native controls on mobile are usually fine
+        v.src = url;
+        frame.appendChild(v);
+
+        // set start time and logging
+        videoStartTime = null;
+        v.addEventListener("play", () => {
+          if(!videoStartTime){ videoStartTime = new Date(); logEvent("VIDEO_PLAY",0,0,0); }
+        });
+      } else {
+        // fallback: embed iframe (Google Drive preview). Some mobile behaviors vary.
+        const ifr = document.createElement("iframe");
+        ifr.src = url;
+        ifr.allow = "autoplay; encrypted-media; fullscreen";
+        ifr.allowFullscreen = true;
+        frame.appendChild(ifr);
+
+        // we can't access iframe playback time reliably; approximate start time
+        videoStartTime = new Date();
+      }
+
+      // show buy button now that a video is selected
       document.getElementById("buy-btn").classList.remove("hidden");
 
       credits = STARTING_CREDITS;
       totalPurchased = 0;
-      videoStartTime = new Date();
       updateStatus();
 
-      logEvent("VIDEO_LOAD", 0, 0, 0);
+      logEvent("VIDEO_LOAD",0,0,0);
     }
 
-    function purchase() {
-      let elapsed = (new Date() - videoStartTime) / 1000;
-      let playbackTime = elapsed; // Approximation, since iframe videos can't directly return currentTime
+    function purchase(){
+      // estimate elapsed since video start (approx for iframe)
+      let elapsed = 0;
+      if(videoStartTime) elapsed = (new Date() - videoStartTime)/1000;
 
-      if (credits >= BOX_PRICE) {
+      // For iframe we cannot get exact playback time; use elapsed as approximation
+      let playbackTime = elapsed;
+
+      if(credits >= BOX_PRICE){
         credits -= BOX_PRICE;
         totalPurchased++;
         updateStatus();
@@ -165,12 +270,12 @@
       }
     }
 
-    function updateStatus() {
+    function updateStatus(){
       document.getElementById("credits").innerText = "Credits Remaining: ₱" + credits;
       document.getElementById("purchases").innerText = "Blind Boxes Purchased: " + totalPurchased;
     }
 
-    function logEvent(action, purchases, elapsedTime, playbackTime) {
+    function logEvent(action, purchases, elapsedTime, playbackTime){
       const payload = {
         timestamp: new Date().toISOString(),
         pid: participantID || "N/A",
@@ -179,7 +284,7 @@
         yearLevel: yearLevel || "N/A",
         videoNumber: currentVideo ? currentVideo.number : "",
         videoFile: currentVideo ? currentVideo.file : "",
-        action: action,
+        action,
         creditsRemaining: credits,
         totalPurchased: purchases,
         timeSinceStart: elapsedTime,
@@ -189,7 +294,7 @@
       const body = "data=" + encodeURIComponent(JSON.stringify(payload));
       fetch(GOOGLE_SCRIPT_URL, {
         method: "POST",
-        headers: {"Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"},
+        headers: {"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"},
         body
       })
       .then(r => r.text())
